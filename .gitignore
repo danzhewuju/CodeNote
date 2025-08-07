@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Plugin build
+/build/distributions/
+/build/libs/
+/build/tmp/
+
+# Local configuration
+local.properties

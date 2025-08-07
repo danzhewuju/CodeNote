@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin>
+    <id>com.codenote.enhanced</id>
+    <name>CodeNote Enhanced</name>
+    <vendor email="your-email@example.com" url="https://github.com/your-username/codenote">CodeNote Team</vendor>
+
+    <description><![CDATA[
+    一个用于代码笔记的IntelliJ IDEA插件。主要功能包括：
+    - 选择代码片段并记录为笔记
+    - 快速查看和跳转到记录的代码笔记
+    - 可配置的笔记存储位置
+    - 支持添加备注和标签
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- 配置页面 -->
+        <applicationConfigurable 
+            parentId="tools" 
+            instance="com.codenote.settings.CodeNoteConfigurable"
+            id="com.codenote.settings.CodeNoteConfigurable"
+            displayName="CodeNote"/>
+        
+        <!-- 应用程序服务 -->
+        <applicationService serviceImplementation="com.codenote.service.CodeNoteService"/>
+        
+        <!-- 工具窗口 -->
+        <toolWindow id="CodeNoteEnhanced" secondary="true" anchor="right" 
+                   factoryClass="com.codenote.ui.CodeNoteToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <!-- 测试动作 -->
+        <action id="TestCodeNote" class="com.codenote.action.TestAction" 
+                text="CodeNote 测试" description="测试 CodeNote 插件是否正常工作">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+        
+        <!-- 添加代码笔记动作 -->
+        <action id="AddCodeNote" class="com.codenote.action.AddDetailedCodeNoteAction" 
+                text="添加代码笔记" description="添加代码笔记并设置标题、备注、标签">
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="TestCodeNote"/>
+            <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt N"/>
+        </action>
+        
+        <!-- 主菜单动作 -->
+        <action id="AddCodeNoteFromMenu" class="com.codenote.action.AddDetailedCodeNoteAction" 
+                text="添加代码笔记" description="添加代码笔记并设置标题、备注、标签">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="TestCodeNote"/>
+        </action>
+        
+        <!-- 工具栏动作 -->
+        <action id="ShowCodeNotes" class="com.codenote.action.ShowCodeNotesAction"
+                text="显示代码笔记" description="显示所有代码笔记">
+            <add-to-group group-id="MainToolBar" anchor="last"/>
+        </action>
+        
+        <!-- 主菜单中的显示动作 -->
+        <action id="ShowCodeNotesFromMenu" class="com.codenote.action.ShowCodeNotesAction"
+                text="显示代码笔记" description="显示所有代码笔记">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="AddCodeNoteFromMenu"/>
+        </action>
+        
+        <!-- 导出笔记动作 -->
+        <action id="ExportNotesFromMenu" class="com.codenote.action.ExportNotesAction"
+                text="导出笔记" description="导出代码笔记到JSON文件">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="ShowCodeNotesFromMenu"/>
+        </action>
+        
+        <!-- 导入笔记动作 -->
+        <action id="ImportNotesFromMenu" class="com.codenote.action.ImportNotesAction"
+                text="导入笔记" description="从JSON文件导入代码笔记">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="ExportNotesFromMenu"/>
+        </action>
+    </actions>
+</idea-plugin>
