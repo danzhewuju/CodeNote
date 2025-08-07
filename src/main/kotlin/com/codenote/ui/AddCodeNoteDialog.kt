@@ -36,7 +36,11 @@ class AddCodeNoteDialog(
     private lateinit var codeEditor: EditorEx
     
     init {
-        title = "添加代码笔记"
+        // 根据是否有现有内容来判断是添加还是编辑
+        val isEditing = originalCodeNote.note.isNotBlank() || originalCodeNote.tags.isNotEmpty() || 
+                       (originalCodeNote.title.isNotBlank() && originalCodeNote.title != generateDefaultTitle())
+        
+        title = if (isEditing) "编辑代码笔记" else "添加代码笔记"
         setOKButtonText("保存")
         setCancelButtonText("取消")
         init()
@@ -87,7 +91,7 @@ class AddCodeNoteDialog(
         panel.border = createSectionBorder("📝 笔记标题")
         
         titleField = JBTextField()
-        titleField.text = generateDefaultTitle()
+        titleField.text = originalCodeNote.title
         titleField.font = titleField.font.deriveFont(Font.BOLD, 14f)
         
         panel.add(titleField, BorderLayout.CENTER)
@@ -162,6 +166,7 @@ class AddCodeNoteDialog(
         panel.border = createSectionBorder("📄 笔记内容")
         
         noteField = JBTextArea()
+        noteField.text = originalCodeNote.note
         noteField.lineWrap = true
         noteField.wrapStyleWord = true
         noteField.font = Font(Font.SANS_SERIF, Font.PLAIN, 13)
@@ -186,6 +191,7 @@ class AddCodeNoteDialog(
         val tagsPanel = HorizontalBox()
         
         tagsField = JBTextField()
+        tagsField.text = originalCodeNote.tags.joinToString(", ")
         tagsField.toolTipText = "用逗号分隔多个标签，例如：算法,优化,重要"
         
         val exampleLabel = JBLabel("例如：算法, 优化, 重要")

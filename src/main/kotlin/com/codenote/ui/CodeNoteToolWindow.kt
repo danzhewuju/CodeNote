@@ -2,6 +2,7 @@ package com.codenote.ui
 
 import com.codenote.model.CodeNote
 import com.codenote.service.CodeNoteService
+import com.codenote.service.CodeNoteNotificationService
 import com.codenote.service.ImportExportService
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
@@ -156,7 +157,7 @@ class CodeNoteToolWindow(private val project: Project) {
         // 设置列表样式
         notesList.border = JBUI.Borders.empty(5)
         
-        // 双击跳转
+        // 双击跳转到代码
         notesList.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (e.clickCount == 2) {
@@ -174,6 +175,7 @@ class CodeNoteToolWindow(private val project: Project) {
         // 空状态显示
         notesList.emptyText.text = "暂无代码笔记"
         notesList.emptyText.appendLine("右键代码选择「添加代码笔记」来创建")
+        notesList.emptyText.appendLine("双击跳转代码 | 右键编辑笔记")
         
         val scrollPane = JBScrollPane(notesList)
         scrollPane.border = JBUI.Borders.compound(
@@ -304,6 +306,12 @@ class CodeNoteToolWindow(private val project: Project) {
             }
         }
         popupMenu.add(jumpToCodeItem)
+        
+        val editItem = JMenuItem("✏️ 编辑笔记", AllIcons.Actions.Edit)
+        editItem.addActionListener {
+            editSelectedNote()
+        }
+        popupMenu.add(editItem)
         
         popupMenu.addSeparator()
         
@@ -446,6 +454,42 @@ class CodeNoteToolWindow(private val project: Project) {
             }
             filteredNotes.forEach { listModel.addElement(it) }
             updateStatusLabel()
+        }
+    }
+    
+    /**
+     * 编辑选中的笔记
+     */
+    private fun editSelectedNote() {
+        val selectedNote = notesList.selectedValue ?: return
+        
+        // 使用相同的对话框进行编辑
+        val dialog = com.codenote.ui.AddCodeNoteDialog(project, selectedNote)
+        if (dialog.showAndGet()) {
+            val updatedNote = dialog.getCodeNote()
+            
+            // 更新笔记
+            codeNoteService.updateCodeNote(selectedNote.id, updatedNote)
+            val success = true
+            if (success) {
+                // 刷新列表
+                loadNotes()
+                
+                // 通知刷新
+                CodeNoteNotificationService.getInstance().notifyCodeNoteUpdated(project)
+                
+                Messages.showInfoMessage(
+                    project,
+                    "✅ 代码笔记已更新！\n📁 ${updatedNote.getRelativePath()}\n📍 第${updatedNote.startLine}-${updatedNote.endLine}行",
+                    "CodeNote"
+                )
+            } else {
+                Messages.showErrorDialog(
+                    project,
+                    "更新代码笔记失败",
+                    "CodeNote Error"
+                )
+            }
         }
     }
     
