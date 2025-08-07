@@ -1,7 +1,9 @@
 package com.codenote.settings
 
+import com.codenote.service.ShortcutManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBCheckBox
@@ -36,18 +38,37 @@ class CodeNoteConfigurable : Configurable {
                component.getMaxNotesPerProject() != settings.maxNotesPerProject ||
                component.isAutoSave() != settings.autoSave ||
                component.isShowLineNumbers() != settings.showLineNumbers ||
-               component.isEnableSyntaxHighlight() != settings.enableSyntaxHighlight
+               component.isEnableSyntaxHighlight() != settings.enableSyntaxHighlight ||
+               component.isCustomShortcutEnabled() != settings.customShortcutEnabled ||
+               component.getCustomShortcutKeyStroke() != settings.customShortcutKeyStroke
     }
     
     override fun apply() {
         val settings = CodeNoteSettings.getInstance()
         val component = settingsComponent ?: return
         
+        // 验证快捷键格式
+        if (component.isCustomShortcutEnabled()) {
+            val shortcutText = component.getCustomShortcutKeyStroke()
+            if (shortcutText.isNotBlank() && !ShortcutManager.getInstance().validateShortcutText(shortcutText)) {
+                Messages.showErrorDialog(
+                    "快捷键格式无效。请使用正确的格式，如：ctrl alt S, ctrl shift N 等。",
+                    "快捷键配置错误"
+                )
+                return
+            }
+        }
+        
         settings.storagePath = component.getStoragePath()
         settings.maxNotesPerProject = component.getMaxNotesPerProject()
         settings.autoSave = component.isAutoSave()
         settings.showLineNumbers = component.isShowLineNumbers()
         settings.enableSyntaxHighlight = component.isEnableSyntaxHighlight()
+        settings.customShortcutEnabled = component.isCustomShortcutEnabled()
+        settings.customShortcutKeyStroke = component.getCustomShortcutKeyStroke()
+        
+        // 应用快捷键设置
+        ShortcutManager.getInstance().applyCustomShortcut()
     }
     
     override fun reset() {
@@ -59,6 +80,8 @@ class CodeNoteConfigurable : Configurable {
         component.setAutoSave(settings.autoSave)
         component.setShowLineNumbers(settings.showLineNumbers)
         component.setEnableSyntaxHighlight(settings.enableSyntaxHighlight)
+        component.setCustomShortcutEnabled(settings.customShortcutEnabled)
+        component.setCustomShortcutKeyStroke(settings.customShortcutKeyStroke)
     }
     
     override fun disposeUIResources() {
@@ -75,6 +98,8 @@ class CodeNoteConfigurable : Configurable {
         private val autoSaveCheckbox: JBCheckBox = JBCheckBox("自动保存")
         private val showLineNumbersCheckbox: JBCheckBox = JBCheckBox("显示行号")
         private val enableSyntaxHighlightCheckbox: JBCheckBox = JBCheckBox("启用语法高亮")
+        private val customShortcutCheckbox: JBCheckBox = JBCheckBox("启用自定义快捷键")
+        private val customShortcutField: JBTextField = JBTextField()
         
         init {
             // 设置存储路径选择器
@@ -89,6 +114,15 @@ class CodeNoteConfigurable : Configurable {
             // 设置最大笔记数量字段
             maxNotesField.text = "1000"
             
+            // 设置快捷键字段
+            customShortcutField.text = "ctrl alt s"
+            customShortcutField.isEnabled = false
+            
+            // 添加复选框监听器
+            customShortcutCheckbox.addActionListener {
+                customShortcutField.isEnabled = customShortcutCheckbox.isSelected
+            }
+            
             // 构建表单
             val formBuilder = FormBuilder.createFormBuilder()
                 .addLabeledComponent(JBLabel("存储路径:"), storagePathField, 1, false)
@@ -96,6 +130,10 @@ class CodeNoteConfigurable : Configurable {
                 .addComponent(autoSaveCheckbox, 1)
                 .addComponent(showLineNumbersCheckbox, 1)
                 .addComponent(enableSyntaxHighlightCheckbox, 1)
+                .addSeparator()
+                .addComponent(customShortcutCheckbox, 1)
+                .addLabeledComponent(JBLabel("快捷键 (格式: ctrl alt S):"), customShortcutField, 1, false)
+                .addComponent(JBLabel("<html><small>支持的修饰键: ctrl, alt, shift, cmd<br/>示例: ctrl alt s, ctrl shift n, alt f1<br/>注意: 使用小写字母，用空格分隔</small></html>"), 1)
                 .addComponentFillVertically(JPanel(), 0)
             
             mainPanel.add(formBuilder.panel, BorderLayout.CENTER)
@@ -132,6 +170,17 @@ class CodeNoteConfigurable : Configurable {
         fun isEnableSyntaxHighlight(): Boolean = enableSyntaxHighlightCheckbox.isSelected
         fun setEnableSyntaxHighlight(enabled: Boolean) {
             enableSyntaxHighlightCheckbox.isSelected = enabled
+        }
+        
+        fun isCustomShortcutEnabled(): Boolean = customShortcutCheckbox.isSelected
+        fun setCustomShortcutEnabled(enabled: Boolean) {
+            customShortcutCheckbox.isSelected = enabled
+            customShortcutField.isEnabled = enabled
+        }
+        
+        fun getCustomShortcutKeyStroke(): String = customShortcutField.text.trim()
+        fun setCustomShortcutKeyStroke(keyStroke: String) {
+            customShortcutField.text = keyStroke
         }
     }
 }

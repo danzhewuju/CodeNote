@@ -26,10 +26,14 @@
         
         <!-- 应用程序服务 -->
         <applicationService serviceImplementation="com.codenote.service.CodeNoteService"/>
+        <applicationService serviceImplementation="com.codenote.service.ShortcutManager"/>
         
         <!-- 工具窗口 -->
         <toolWindow id="CodeNoteEnhanced" secondary="true" anchor="right" 
                    factoryClass="com.codenote.ui.CodeNoteToolWindowFactory"/>
+        
+        <!-- 启动活动 -->
+        <postStartupActivity implementation="com.codenote.startup.CodeNoteStartupActivity"/>
     </extensions>
 
     <actions>
@@ -57,14 +61,16 @@
         
         <!-- 工具栏动作 -->
         <action id="ShowCodeNotes" class="com.codenote.action.ShowCodeNotesAction"
-                text="显示代码笔记" description="显示所有代码笔记">
+                text="切换代码笔记" description="显示/隐藏代码笔记工具窗口">
             <add-to-group group-id="MainToolBar" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt S"/>
         </action>
         
         <!-- 主菜单中的显示动作 -->
         <action id="ShowCodeNotesFromMenu" class="com.codenote.action.ShowCodeNotesAction"
-                text="显示代码笔记" description="显示所有代码笔记">
+                text="切换代码笔记" description="显示/隐藏代码笔记工具窗口">
             <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="AddCodeNoteFromMenu"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt S"/>
         </action>
         
         <!-- 导出笔记动作 -->

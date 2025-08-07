@@ -23,6 +23,8 @@ class CodeNoteSettings : PersistentStateComponent<CodeNoteSettings> {
     var autoSave: Boolean = true
     var showLineNumbers: Boolean = true
     var enableSyntaxHighlight: Boolean = true
+    var customShortcutEnabled: Boolean = false
+    var customShortcutKeyStroke: String = "ctrl alt s"
     
     companion object {
         fun getInstance(): CodeNoteSettings {
