@@ -27,6 +27,7 @@
         <!-- 应用程序服务 -->
         <applicationService serviceImplementation="com.codenote.service.CodeNoteService"/>
         <applicationService serviceImplementation="com.codenote.service.ShortcutManager"/>
+        <applicationService serviceImplementation="com.codenote.service.CodeNoteNotificationService"/>
         
         <!-- 工具窗口 -->
         <toolWindow id="CodeNoteEnhanced" secondary="true" anchor="right" 

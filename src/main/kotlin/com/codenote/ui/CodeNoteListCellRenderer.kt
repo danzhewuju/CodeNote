@@ -23,8 +23,8 @@ class CodeNoteListCellRenderer : ColoredListCellRenderer<CodeNote>() {
     ) {
         if (value == null) return
         
-        // 设置边距
-        border = JBUI.Borders.empty(8, 12, 8, 12)
+        // 设置边距（更紧凑）
+        border = JBUI.Borders.empty(6, 10, 6, 10)
         
         // 设置图标
         icon = getFileIcon(value.filePath)
@@ -38,49 +38,129 @@ class CodeNoteListCellRenderer : ColoredListCellRenderer<CodeNote>() {
         }
         append(title, titleAttributes)
         
-        // 换行显示文件信息
-        appendTextPadding(JBUI.scale(8), 0)
-        append("📁 ${value.getRelativePath()}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        // 文件路径和位置信息在同一行（优化显示）
+        appendTextPadding(JBUI.scale(4), 0)
+        val displayPath = getOptimizedPath(value.getRelativePath())
+        val fileName = displayPath.substringAfterLast("/")
+        val pathWithoutFile = displayPath.substringBeforeLast("/", "")
         
-        // 行号信息
-        append(" 📍 ${value.startLine}-${value.endLine}行", 
+        // 显示文件名（稍微突出）
+        append("📄 $fileName", SimpleTextAttributes(
+            SimpleTextAttributes.STYLE_PLAIN, 
+            JBColor(0x2196F3, 0x64B5F6) // 蓝色文件名
+        ))
+        
+        // 显示路径（更灰一些）
+        if (pathWithoutFile.isNotEmpty()) {
+            append(" 📁 $pathWithoutFile", SimpleTextAttributes(
+                SimpleTextAttributes.STYLE_ITALIC, 
+                JBColor.GRAY.darker()
+            ))
+        }
+        
+        // 行号信息（在同一行右侧）
+        append(" | 📍 ${value.startLine}-${value.endLine}行", 
                SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, JBColor.GRAY))
         
-        // 代码结构信息（类和方法）
-        val structureInfo = value.getCodeStructureInfo()
+        // 代码结构信息（类和方法）- 更紧凑的显示
+        val structureInfo = getCompactStructureInfo(value)
         if (structureInfo.isNotBlank()) {
-            appendTextPadding(JBUI.scale(8), 0)
-            append(structureInfo, SimpleTextAttributes(
+            appendTextPadding(JBUI.scale(4), 0)
+            append("🏛️ $structureInfo", SimpleTextAttributes(
                 SimpleTextAttributes.STYLE_ITALIC, 
                 JBColor(0x4CAF50, 0x81C784) // 绿色主题
             ))
         }
         
-        // 标签显示（如果有的话）
-        if (value.tags.isNotEmpty()) {
-            appendTextPadding(JBUI.scale(8), 0)
-            value.tags.forEachIndexed { i, tag ->
-                if (i > 0) append(" ")
-                append("🏷️$tag", SimpleTextAttributes(
+        // 标签和笔记预览在同一行（紧凑显示）
+        val hasTagsOrNote = value.tags.isNotEmpty() || value.note.isNotBlank()
+        if (hasTagsOrNote) {
+            appendTextPadding(JBUI.scale(4), 0)
+            
+            // 标签显示（更紧凑）
+            if (value.tags.isNotEmpty()) {
+                val tagsText = if (value.tags.size <= 2) {
+                    value.tags.joinToString(" ") { "🏷️$it" }
+                } else {
+                    "${value.tags.take(2).joinToString(" ") { "🏷️$it" }} +${value.tags.size - 2}"
+                }
+                append(tagsText, SimpleTextAttributes(
                     SimpleTextAttributes.STYLE_ITALIC, 
-                    JBColor.BLUE
+                    JBColor(0xFF9800, 0xFFB74D) // 橙色标签
                 ))
             }
-        }
-        
-        // 笔记预览（如果有的话）
-        if (value.note.isNotBlank()) {
-            appendTextPadding(JBUI.scale(8), 0)
-            val notePreview = if (value.note.length > 50) {
-                value.note.substring(0, 50).replace("\n", " ") + "..."
-            } else {
-                value.note.replace("\n", " ")
+            
+            // 笔记预览（如果有的话，在标签后面）
+            if (value.note.isNotBlank()) {
+                if (value.tags.isNotEmpty()) append(" | ")
+                val notePreview = if (value.note.length > 40) {
+                    value.note.substring(0, 40).replace("\n", " ").trim() + "..."
+                } else {
+                    value.note.replace("\n", " ").trim()
+                }
+                append("💭 $notePreview", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
             }
-            append("💭 $notePreview", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
         }
         
         // 设置工具提示
         toolTipText = buildTooltip(value)
+    }
+    
+    /**
+     * 获取紧凑的代码结构信息
+     */
+    private fun getCompactStructureInfo(codeNote: CodeNote): String {
+        val parts = mutableListOf<String>()
+        
+        codeNote.className?.let { className ->
+            // 只显示类名，不显示包路径
+            val simpleClassName = className.substringAfterLast(".")
+            parts.add(simpleClassName)
+        }
+        
+        codeNote.methodName?.let { methodName ->
+            // 简化方法签名显示
+            val simpleMethod = if (methodName.contains("(")) {
+                methodName.substringBefore("(") + "()"
+            } else {
+                methodName
+            }
+            parts.add("→ $simpleMethod")
+        }
+        
+        return parts.joinToString(" ")
+    }
+    
+    /**
+     * 优化路径显示，避免过长的路径
+     */
+    private fun getOptimizedPath(fullPath: String): String {
+        val maxLength = 60
+        if (fullPath.length <= maxLength) {
+            return fullPath
+        }
+        
+        // 尝试智能缩短路径
+        val parts = fullPath.split("/")
+        if (parts.size <= 2) {
+            return if (fullPath.length > maxLength) {
+                "...${fullPath.takeLast(maxLength - 3)}"
+            } else {
+                fullPath
+            }
+        }
+        
+        // 保留开头和结尾部分，中间用...替代
+        val fileName = parts.last()
+        val firstPart = parts.first()
+        
+        val remainingLength = maxLength - fileName.length - firstPart.length - 6 // 6 for ".../" 
+        
+        return if (remainingLength > 0) {
+            "$firstPart/.../$fileName"
+        } else {
+            ".../$fileName"
+        }
     }
     
     private fun getFileIcon(filePath: String): javax.swing.Icon {

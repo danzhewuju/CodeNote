@@ -239,6 +239,11 @@ class ImportExportService {
             
             Messages.showInfoMessage(project, resultMessage, "导入结果")
             
+            // 如果有成功导入的笔记，刷新侧边栏
+            if (importedCount > 0) {
+                CodeNoteNotificationService.getInstance().notifyCodeNoteAdded(project)
+            }
+            
             true
         } catch (e: Exception) {
             Messages.showErrorDialog(project, "导入失败: ${e.message}", "导入错误")

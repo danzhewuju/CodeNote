@@ -340,6 +340,13 @@ class CodeNoteToolWindow(private val project: Project) {
         return popupMenu
     }
     
+    /**
+     * 公共刷新方法，供外部调用
+     */
+    fun refreshNotes() {
+        loadNotes()
+    }
+    
     private fun loadNotes() {
         SwingUtilities.invokeLater {
             // 更新项目下拉框

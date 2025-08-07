@@ -216,7 +216,7 @@ class AddCodeNoteDialog(
      */
     private fun generateDefaultTitle(): String {
         val fileName = originalCodeNote.filePath.substringAfterLast("/")
-        return "代码片段 - $fileName"
+        return "$fileName"
     }
     
     /**

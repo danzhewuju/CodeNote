@@ -3,6 +3,7 @@ package com.codenote.action
 import com.codenote.model.CodeNote
 import com.codenote.service.CodeNoteService
 import com.codenote.service.CodeAnalysisService
+import com.codenote.service.CodeNoteNotificationService
 import com.codenote.ui.AddCodeNoteDialog
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -82,6 +83,9 @@ class AddDetailedCodeNoteAction : AnAction() {
             if (dialog.showAndGet()) {
                 val updatedNote = dialog.getCodeNote()
                 val noteId = CodeNoteService.getInstance().addCodeNote(updatedNote)
+                
+                // 通知侧边栏刷新
+                CodeNoteNotificationService.getInstance().notifyCodeNoteAdded(project)
                 
                 Messages.showInfoMessage(
                     project,
