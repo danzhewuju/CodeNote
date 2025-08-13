@@ -285,30 +285,8 @@ class CodeNoteService {
     fun navigateToCode(project: Project, codeNote: CodeNote) {
         ApplicationManager.getApplication().invokeLater {
             try {
-                val virtualFile = VirtualFileManager.getInstance()
-                    .findFileByUrl("file://${codeNote.filePath}")
-                
-                if (virtualFile != null && virtualFile.exists()) {
-                    val fileEditorManager = com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project)
-                    val editor = fileEditorManager.openFile(virtualFile, true).firstOrNull()
-                    
-                    if (editor is com.intellij.openapi.fileEditor.TextEditor) {
-                        val textEditor = editor.editor
-                        val document = textEditor.document
-                        val startOffset = document.getLineStartOffset(maxOf(0, codeNote.startLine - 1))
-                        val endOffset = if (codeNote.endLine <= document.lineCount) {
-                            document.getLineEndOffset(codeNote.endLine - 1)
-                        } else {
-                            document.textLength
-                        }
-                        
-                        textEditor.caretModel.moveToOffset(startOffset)
-                        textEditor.selectionModel.setSelection(startOffset, endOffset)
-                        textEditor.scrollingModel.scrollToCaret(com.intellij.openapi.editor.ScrollType.CENTER)
-                    }
-                } else {
-                    logger.warn("File not found: ${codeNote.filePath}")
-                }
+                // 使用JumpToCodeAction中的逻辑来支持JAR文件
+                com.codenote.action.JumpToCodeAction.jumpToCode(project, codeNote)
             } catch (e: Exception) {
                 logger.error("Failed to navigate to code", e)
             }
